@@ -1,44 +1,16 @@
 import prisma from "../../../lib/prisma";
+import { getFirstValidationError } from "../../../utils/validation";
 
-// Constants
-const VALID_CATEGORIES = ["Exam", "Event", "General"];
-const VALID_PRIORITIES = ["Normal", "Urgent"];
-
-// Validation Function
-function validateNotice(data) {
-  const { title, body, publishDate, category, priority } = data;
-
-  if (!title || title.trim() === "") {
-    return "Title is required.";
-  }
-
-  if (!body || body.trim() === "") {
-    return "Body is required.";
-  }
-
-  if (!publishDate || isNaN(Date.parse(publishDate))) {
-    return "A valid publish date is required.";
-  }
-
-  if (!VALID_CATEGORIES.includes(category)) {
-    return "Invalid category.";
-  }
-
-  if (!VALID_PRIORITIES.includes(priority)) {
-    return "Invalid priority.";
-  }
-
-  return null;
-}
+// ===========================
+// ROUTER
+// ===========================
 
 export default async function handler(req, res) {
   switch (req.method) {
     case "GET":
-      return getNotices(req, res);
-
+      return getNotices(res);
     case "POST":
       return createNotice(req, res);
-
     default:
       res.setHeader("Allow", ["GET", "POST"]);
       return res.status(405).json({
@@ -51,17 +23,11 @@ export default async function handler(req, res) {
 // ===========================
 // GET ALL NOTICES
 // ===========================
-async function getNotices(req, res) {
+
+async function getNotices(res) {
   try {
     const notices = await prisma.notice.findMany({
-      orderBy: [
-        {
-          priority: "desc",
-        },
-        {
-          publishDate: "desc",
-        },
-      ],
+      orderBy: [{ priority: "desc" }, { publishDate: "desc" }],
     });
 
     return res.status(200).json({
@@ -70,8 +36,7 @@ async function getNotices(req, res) {
       data: notices,
     });
   } catch (error) {
-    console.error("GET /api/notices:", error);
-
+    console.error("[GET /api/notices]", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch notices.",
@@ -82,25 +47,16 @@ async function getNotices(req, res) {
 // ===========================
 // CREATE NOTICE
 // ===========================
+
 async function createNotice(req, res) {
   try {
-    const validationError = validateNotice(req.body);
+    const validationError = getFirstValidationError(req.body);
 
     if (validationError) {
-      return res.status(400).json({
-        success: false,
-        message: validationError,
-      });
+      return res.status(400).json({ success: false, message: validationError });
     }
 
-    const {
-      title,
-      body,
-      category,
-      priority,
-      publishDate,
-      image,
-    } = req.body;
+    const { title, body, category, priority, publishDate, image } = req.body;
 
     const notice = await prisma.notice.create({
       data: {
@@ -109,7 +65,7 @@ async function createNotice(req, res) {
         category,
         priority,
         publishDate: new Date(publishDate),
-        image: image || null,
+        image: image?.trim() || null,
       },
     });
 
@@ -119,8 +75,7 @@ async function createNotice(req, res) {
       data: notice,
     });
   } catch (error) {
-    console.error("POST /api/notices:", error);
-
+    console.error("[POST /api/notices]", error);
     return res.status(500).json({
       success: false,
       message: "Failed to create notice.",

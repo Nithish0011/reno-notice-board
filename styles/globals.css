@@ -1,26 +1,201 @@
 @import "tailwindcss";
 
+@source "../pages/**/*.{js,jsx}";
+@source "../components/**/*.{js,jsx}";
+@source "../utils/**/*.{js,jsx}";
+
+/* ============================================================
+   THEME — custom tokens exposed to Tailwind utilities
+============================================================ */
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --animate-fade-in:    fade-in   0.18s ease both;
+  --animate-slide-up:   slide-up  0.22s cubic-bezier(0.16,1,0.3,1) both;
+  --animate-slide-down: slide-down 0.22s cubic-bezier(0.16,1,0.3,1) both;
+  --animate-card-in:    card-in   0.28s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ============================================================
+   KEYFRAMES
+============================================================ */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ============================================================
+   DESIGN TOKENS
+============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --reno-primary:        #2563EB;
+  --reno-primary-hover:  #1D4ED8;
+  --reno-primary-light:  #EFF6FF;
+  --reno-danger:         #EF4444;
+  --reno-danger-light:   #FEF2F2;
+  --reno-success:        #22C55E;
+  --reno-success-light:  #F0FDF4;
+  --reno-warning:        #F59E0B;
+  --reno-warning-light:  #FFFBEB;
+  --reno-bg:             #F8FAFC;
+  --reno-surface:        #FFFFFF;
+  --reno-border:         #E2E8F0;
+  --reno-border-strong:  #CBD5E1;
+  --reno-text:           #0F172A;
+  --reno-text-secondary: #475569;
+  --reno-muted:          #64748B;
+  --reno-subtle:         #94A3B8;
+  --reno-placeholder:    #CBD5E1;
+  --shadow-xs:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm:  0 1px 3px 0 rgb(0 0 0 / 0.10), 0 1px 2px -1px rgb(0 0 0 / 0.10);
+  --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+  --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-xl:  0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+  --shadow-card-hover: 0 8px 24px -4px rgb(37 99 235 / 0.12), 0 2px 8px -2px rgb(37 99 235 / 0.06);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ============================================================
+   BASE
+============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--reno-bg);
+  color: var(--reno-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+}
+
+a { color: inherit; text-decoration: none; }
+img, svg { display: block; max-width: 100%; }
+button { cursor: pointer; }
+
+:focus-visible {
+  outline: 2px solid var(--reno-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ============================================================
+   CARD COMPONENT
+============================================================ */
+.reno-card {
+  background: var(--reno-surface);
+  border: 1px solid var(--reno-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.reno-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   STAT WIDGET
+============================================================ */
+.stat-widget {
+  background: var(--reno-surface);
+  border: 1px solid var(--reno-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem 1.5rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.stat-widget:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   FORM INPUTS — elevated focus ring
+============================================================ */
+.reno-input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1.5px solid var(--reno-border);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: var(--reno-text);
+  background: var(--reno-surface);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  line-height: 1.5;
+}
+
+.reno-input::placeholder { color: var(--reno-placeholder); }
+
+.reno-input:focus {
+  outline: none;
+  border-color: var(--reno-primary);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.12);
+}
+
+.reno-input.error {
+  border-color: var(--reno-danger);
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 0.10);
+}
+
+/* ============================================================
+   SCROLLBAR
+============================================================ */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--reno-border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--reno-border-strong); }
+
+/* ============================================================
+   UTILITIES
+============================================================ */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.backdrop-blur-sm { backdrop-filter: blur(8px); }
+
+/* gradient shimmer for empty / loading states */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: 8px;
 }

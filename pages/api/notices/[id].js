@@ -1,60 +1,30 @@
 import prisma from "../../../lib/prisma";
+import { getFirstValidationError } from "../../../utils/validation";
 
-// Validation
-const VALID_CATEGORIES = ["Exam", "Event", "General"];
-const VALID_PRIORITIES = ["Normal", "Urgent"];
-
-function validateNotice(data) {
-  const { title, body, publishDate, category, priority } = data;
-
-  if (!title || title.trim() === "") {
-    return "Title is required.";
-  }
-
-  if (!body || body.trim() === "") {
-    return "Body is required.";
-  }
-
-  if (!publishDate || isNaN(Date.parse(publishDate))) {
-    return "Valid publish date is required.";
-  }
-
-  if (!VALID_CATEGORIES.includes(category)) {
-    return "Invalid category.";
-  }
-
-  if (!VALID_PRIORITIES.includes(priority)) {
-    return "Invalid priority.";
-  }
-
-  return null;
-}
+// ===========================
+// ROUTER
+// ===========================
 
 export default async function handler(req, res) {
   const { id } = req.query;
-
   const noticeId = Number(id);
 
-  if (isNaN(noticeId)) {
+  if (!Number.isInteger(noticeId) || noticeId <= 0) {
     return res.status(400).json({
       success: false,
-      message: "Invalid Notice ID",
+      message: "Invalid notice ID.",
     });
   }
 
   switch (req.method) {
     case "GET":
       return getNotice(noticeId, res);
-
     case "PUT":
       return updateNotice(noticeId, req, res);
-
     case "DELETE":
       return deleteNotice(noticeId, res);
-
     default:
       res.setHeader("Allow", ["GET", "PUT", "DELETE"]);
-
       return res.status(405).json({
         success: false,
         message: `Method ${req.method} Not Allowed`,
@@ -62,17 +32,13 @@ export default async function handler(req, res) {
   }
 }
 
-/* ===========================
-   GET SINGLE NOTICE
-=========================== */
+// ===========================
+// GET SINGLE NOTICE
+// ===========================
 
 async function getNotice(id, res) {
   try {
-    const notice = await prisma.notice.findUnique({
-      where: {
-        id,
-      },
-    });
+    const notice = await prisma.notice.findUnique({ where: { id } });
 
     if (!notice) {
       return res.status(404).json({
@@ -81,13 +47,9 @@ async function getNotice(id, res) {
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      data: notice,
-    });
+    return res.status(200).json({ success: true, data: notice });
   } catch (error) {
-    console.error("GET Notice:", error);
-
+    console.error(`[GET /api/notices/${id}]`, error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch notice.",
@@ -95,41 +57,37 @@ async function getNotice(id, res) {
   }
 }
 
-/* ===========================
-   UPDATE NOTICE
-=========================== */
+// ===========================
+// UPDATE NOTICE
+// ===========================
 
 async function updateNotice(id, req, res) {
   try {
-    const validationError = validateNotice(req.body);
+    const validationError = getFirstValidationError(req.body);
 
     if (validationError) {
-      return res.status(400).json({
+      return res.status(400).json({ success: false, message: validationError });
+    }
+
+    const { title, body, category, priority, publishDate, image } = req.body;
+
+    const existing = await prisma.notice.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({
         success: false,
-        message: validationError,
+        message: "Notice not found.",
       });
     }
 
-    const {
-      title,
-      body,
-      category,
-      priority,
-      publishDate,
-      image,
-    } = req.body;
-
     const notice = await prisma.notice.update({
-      where: {
-        id,
-      },
+      where: { id },
       data: {
         title: title.trim(),
         body: body.trim(),
         category,
         priority,
         publishDate: new Date(publishDate),
-        image: image || null,
+        image: image?.trim() || null,
       },
     });
 
@@ -139,8 +97,7 @@ async function updateNotice(id, req, res) {
       data: notice,
     });
   } catch (error) {
-    console.error("UPDATE Notice:", error);
-
+    console.error(`[PUT /api/notices/${id}]`, error);
     return res.status(500).json({
       success: false,
       message: "Failed to update notice.",
@@ -148,25 +105,28 @@ async function updateNotice(id, req, res) {
   }
 }
 
-/* ===========================
-   DELETE NOTICE
-=========================== */
+// ===========================
+// DELETE NOTICE
+// ===========================
 
 async function deleteNotice(id, res) {
   try {
-    await prisma.notice.delete({
-      where: {
-        id,
-      },
-    });
+    const existing = await prisma.notice.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: "Notice not found.",
+      });
+    }
+
+    await prisma.notice.delete({ where: { id } });
 
     return res.status(200).json({
       success: true,
       message: "Notice deleted successfully.",
     });
   } catch (error) {
-    console.error("DELETE Notice:", error);
-
+    console.error(`[DELETE /api/notices/${id}]`, error);
     return res.status(500).json({
       success: false,
       message: "Failed to delete notice.",

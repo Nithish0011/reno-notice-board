@@ -7,12 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Category {
+  Exam
+  Event
+  General
+}
+
+enum Priority {
+  Normal
+  Urgent
+}
+
 model Notice {
   id          Int      @id @default(autoincrement())
   title       String
   body        String
-  category    String
-  priority    String
+  category    Category
+  priority    Priority
   publishDate DateTime
   image       String?
   createdAt   DateTime @default(now())
