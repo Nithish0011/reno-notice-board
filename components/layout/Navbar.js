@@ -23,9 +23,9 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Reno"
+          <imgage
+            src="../../public/N_Logo.png"
+            alt="N"
             className="h-10 w-10 object-contain"
           />
 
