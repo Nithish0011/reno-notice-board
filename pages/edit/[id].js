@@ -9,49 +9,51 @@ import { useRole } from "../../context/RoleContext";
 export default function EditNoticePage() {
   const router = useRouter();
   const { id } = router.query;
-
   const { role } = useRole();
 
   const [notice, setNotice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Protect page
+  // Redirect non-admins immediately
   useEffect(() => {
     if (role !== "admin") {
       router.replace("/");
     }
   }, [role, router]);
 
+  // Load notice data
   useEffect(() => {
     if (!id || role !== "admin") return;
 
-    loadNotice();
+    let cancelled = false;
+
+    setLoading(true);
+    setError("");
+
+    getNoticeById(id)
+      .then((data) => {
+        if (!cancelled) setNotice(data);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (!cancelled) setError("Unable to load notice.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [id, role]);
 
-  async function loadNotice() {
-    try {
-      const data = await getNoticeById(id);
-      setNotice(data);
-    } catch (err) {
-      console.error(err);
-      setError("Unable to load notice.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Prevent rendering while redirecting
-  if (role !== "admin") {
-    return null;
-  }
+  if (role !== "admin") return null;
 
   if (loading) {
     return (
       <Layout>
-        <div className="py-20 text-center">
-          Loading...
-        </div>
+        <div className="py-20 text-center text-slate-500">Loading...</div>
       </Layout>
     );
   }
@@ -59,19 +61,22 @@ export default function EditNoticePage() {
   if (error) {
     return (
       <Layout>
-        <div className="py-20 text-center text-red-600">
-          {error}
-        </div>
+        <div className="py-20 text-center text-red-600">{error}</div>
+      </Layout>
+    );
+  }
+
+  if (!notice) {
+    return (
+      <Layout>
+        <div className="py-20 text-center text-slate-600">Notice not found.</div>
       </Layout>
     );
   }
 
   return (
     <Layout>
-      <NoticeForm
-        initialValues={notice}
-        isEdit
-      />
+      <NoticeForm initialValues={notice} isEdit />
     </Layout>
   );
 }

@@ -16,7 +16,7 @@ export default function LeftSidebar() {
 
         <h3 className="font-semibold text-slate-800">
 
-          Today's Events
+          Today&apos;s Events
 
         </h3>
 
